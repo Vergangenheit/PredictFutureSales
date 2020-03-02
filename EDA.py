@@ -4,6 +4,9 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from datetime import datetime, date
 import os
+import chart_studio.plotly as py
+import plotly.offline as pyoff
+import plotly.graph_objs as go
 
 # to display all the columns of the dataframe in the notebook
 pd.pandas.set_option('display.max_columns', None)
@@ -56,10 +59,56 @@ def convert_dates_to_months(df: pd.DataFrame) -> pd.DataFrame:
     return X
 
 
-def group_into_monthly_sales(df: pd.DataFrame) -> pd.DataFrame:
+def group_into_monthly_sales(df: pd.DataFrame, *args: list) -> pd.DataFrame:
     X = df.copy()
-    grouped = pd.DataFrame(X.groupby(['date', 'date_block_num', 'shop_id', 'item_id']).agg(
+    grouped = pd.DataFrame(X.groupby(args).agg(
         {'item_price': 'mean', 'item_cnt_day': 'sum'}))
-    monthly = grouped.reset_index(drop=False).rename(columns={'item_cnt_day': 'item_cnt_month'})
+    monthly = grouped.reset_index(drop=False).rename(columns={'item_cnt_day': 'monthly_sales'})
 
     return monthly
+
+
+# sales_m = group_into_monthly_sales(sales, ['date', 'date_block_num', 'shop_id', 'item_id'])
+
+def plot_series(df: pd.DataFrame):
+    # Group also the aggregate of all shops and items to plot.
+    X = df.copy()
+    X = X.groupby('date').monthly_sales.sum().reset_index()
+
+    # plot monthly sales
+    plot_data = [
+        go.Scatter(
+            x=X['date'],
+            y=X['monthly_sales'],
+        )
+    ]
+    plot_layout = go.Layout(
+        title='Monthly Sales'
+    )
+    fig = go.Figure(data=plot_data, layout=plot_layout)
+    pyoff.iplot(fig)
+
+
+def render_stationary(df: pd.DataFrame) -> pd.DataFrame:
+    # create a new dataframe to model the difference
+    df_diff = df.copy()
+    # add previous sales to the next row
+    df_diff['prev_sales'] = df_diff['monthly_sales'].shift(1)
+    # drop the null values and calculate the difference
+    df_diff = df_diff.dropna()
+    df_diff['diff'] = (df_diff['monthly_sales'] - df_diff['prev_sales'])
+
+    # plot sales diff
+    plot_data = [
+        go.Scatter(
+            x=df_diff['date'],
+            y=df_diff['diff'],
+        )
+    ]
+    plot_layout = go.Layout(
+        title='Montly Sales Diff'
+    )
+    fig = go.Figure(data=plot_data, layout=plot_layout)
+    pyoff.iplot(fig)
+
+    return df_diff
