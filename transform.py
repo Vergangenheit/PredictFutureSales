@@ -32,17 +32,16 @@ def build_featureset(df_diff: pd.DataFrame, look_back: int) -> pd.DataFrame:
     # drop Nan
     df_supervised = df_supervised.dropna(axis=0, inplace=False).reset_index(drop=True)
 
+    return df_supervised
+
+
+def scale_features(df_supervised: pd.DataFrame) -> (sklearn.preprocessing.MinMaxScaler, np.array):
     df_model = df_supervised.drop(['sales', 'date'], axis=1)
-
-    return df_model
-
-
-def scale_features(df_model: pd.DataFrame) -> np.array:
     scaler = MinMaxScaler(feature_range=(-1, 1))
     scaler.fit(df_model.values)
     train_set_scaled = scaler.transform(df_model.values)
 
-    return train_set_scaled
+    return scaler, train_set_scaled
 
 
 def adjusted_r_sqrt(df_supervised: pd.DataFrame, target: str, features: list):
