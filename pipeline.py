@@ -3,6 +3,7 @@ from sklearn.preprocessing import MinMaxScaler
 import data_management as dm
 import ETL as pp
 import config
+import model
 """instantiate Pipeline obect"""
 
 sales_pipe = Pipeline(
@@ -12,5 +13,6 @@ sales_pipe = Pipeline(
     ('shop_grouper', pp.ShopGrouper()),
     ('feature_builder', pp.FeatureBuilder(config.LOOK_BACK)),
     ('scaler', MinMaxScaler(feature_range=(-1, 1))),
-    ('feature_target_splitter', pp.TargetDefiner())
+    ('feature_target_splitter', pp.TargetDefiner()),
+    ('lstm_regressor', model.lstm_regressor)
 )

@@ -7,7 +7,7 @@ import config
 _logger = logging.getLogger(__name__)
 
 
-def load_datasets():
+def load_datasets() -> pd.DataFrame:
     sales = pd.read_csv(os.path.join(config.DATASET_DIR, config.SALES_FILE))
     items = pd.read_csv(os.path.join(config.DATASET_DIR, config.ITEMS_FILE))
     # test = pd.read_csv(os.path.join(config.DATASET_DIR, 'test.csv'))
@@ -17,7 +17,6 @@ def load_datasets():
     sales = merging(sales, items, 'item_id')
     sales = merging(sales, item_categories, 'item_category_id')
     sales = merging(sales, shops, 'shop_id')
-    sales = reorder_columns(sales)
 
     return sales
 
