@@ -1,5 +1,5 @@
 from data_management import load_datasets
-#from pipeline import sales_pipe
+import os
 from model import lstm_model
 import ETL as pp
 import config
@@ -22,6 +22,7 @@ def run_training() -> None:
     print(X_train.shape, y_train.shape)
     model = lstm_model((1, X_train.shape[2]))
     model.fit(X_train, y_train, batch_size=1, epochs=30, verbose=1, shuffle=False)
+    model.save(config.MODEL_PATH)
 
 
 if __name__ == '__main__':

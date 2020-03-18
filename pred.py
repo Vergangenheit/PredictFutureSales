@@ -1,29 +1,29 @@
 from transform import scale_features, build_featureset
 from EDA import render_stationary
 from model import model
+from data_management import load_datasets
+import ETL as pp
 import numpy as np
+from tensorflow.keras.models import load_model
+import config
 
-X_train, y_train = train_set_scaled[:, 1:], train_set_scaled[:, 0:1]
-model = model((1, X_train.shape[2]))
-model.fit(X_train, y_train, batch_size=1, epochs=100, verbose=1, shuffle=False)
+
+def load_saved_model():
+    model = load_model(config.MODEL_PATH)
+
+    return model
 
 
 def build_inference_sample() -> np.array:
-    ## TO COMPLETE PIPELINE
-    df_diff = render_stationary()
-    df_supervised = build_inference_sample(df_diff)
-    scaler, train_set_scaled = scale_features(df_supervised)
-    # build and train model
-    X_train, y_train = train_set_scaled[:, 1:], train_set_scaled[:, 0:1]
-    model = model((1, X_train.shape[2]))
-    model.fit(X_train, y_train, batch_size=1, epochs=100, verbose=1, shuffle=False)
-    features_2015_11 = train_set_scaled[-1][:-1]
-    features_2015_11 = features_2015_11.reshape(1, 1, features_2015_11.shape[0]).astype('float32')
-    # calculate prediction
-    y_pred = model.predict(features_2015_11, batch_size=1)
-    features_2015_11 = features_2015_11.reshape(features_2015_11.shape[1], features_2015_11.shape[2])
-    pred_test_set = np.hstack((y_pred, features_2015_11))
-    # inverse scale the sample
-    final_pred = scaler.inverse_transform(pred_test_set)
+    sales = load_datasets()
 
-    return final_pred
+    X = pp.reorder(sales, config.COLUMNS)
+    X = pp.sorter(X)
+    X = pp.grouper(X, config.GROUPING_VARS)
+    X = pp.stationarizer(X)
+    X = pp.featureBuilder(X, 12)
+    _, X = pp.scale_features(X)
+    # the inference sample features are the last records target + first eleven features
+    infer_sample = X[-1][:-1]
+
+    return infer_sample
